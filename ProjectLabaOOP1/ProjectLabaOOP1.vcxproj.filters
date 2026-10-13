@@ -85,6 +85,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="..\..\..\..\Desktop\Architecture.txt" />
+    <Text Include="..\Architecture.txt" />
   </ItemGroup>
 </Project>
