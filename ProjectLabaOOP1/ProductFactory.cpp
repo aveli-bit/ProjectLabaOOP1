@@ -10,6 +10,7 @@ std::unique_ptr<Product> SmartphoneFactory::createProduct(
     int price, int quantity, double weight) const
 {
     // 
+    // make_unique создаёт смартфон и сразу помещает его во владеющий указатель
     auto product = std::make_unique<Smartphone>(
         id, name, Price(price),
         Quantity(quantity), Weight(weight)

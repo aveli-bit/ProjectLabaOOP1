@@ -126,12 +126,17 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Clothing.cpp" />
+    <ClCompile Include="Delivery.cpp" />
     <ClCompile Include="Electronics.cpp" />
     <ClCompile Include="Food.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Order.cpp" />
+    <ClCompile Include="OrderManager.cpp" />
+    <ClCompile Include="Discount.cpp" />
     <ClCompile Include="Price.cpp" />
     <ClCompile Include="Product.cpp" />
     <ClCompile Include="ProductFactory.cpp" />
+    <ClCompile Include="ProductType.cpp" />
     <ClCompile Include="Quantity.cpp" />
     <ClCompile Include="Warehouse.cpp" />
     <ClCompile Include="WarehouseIterator.cpp" />
@@ -139,12 +144,18 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Clothing.h" />
+    <ClInclude Include="Delivery.h" />
+    <ClInclude Include="Discount.h" />
     <ClInclude Include="Electronics.h" />
     <ClInclude Include="Food.h" />
     <ClInclude Include="LoggingProxy.h" />
+    <ClInclude Include="Order.h" />
+    <ClInclude Include="OrderManager.h" />
+    <ClInclude Include="OrderEvents.h" />
     <ClInclude Include="Price.h" />
     <ClInclude Include="Product.h" />
     <ClInclude Include="ProductFactory.h" />
+    <ClInclude Include="ProductType.h" />
     <ClInclude Include="Quantity.h" />
     <ClInclude Include="Warehouse.h" />
     <ClInclude Include="WarehouseIterator.h" />

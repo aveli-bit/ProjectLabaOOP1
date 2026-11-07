@@ -1,5 +1,6 @@
 ﻿#include "Electronics.h"
 
+// передаём характеристики и категорию в Product
 Electronics::Electronics(const std::string& name,
     const Price& price,
     const Quantity& quantity,
@@ -8,6 +9,7 @@ Electronics::Electronics(const std::string& name,
 {
 }
 
+// конструктор смартфона с автоматическим ID
 Smartphone::Smartphone(const std::string& name,
     const Price& price,
     const Quantity& quantity,
@@ -16,11 +18,13 @@ Smartphone::Smartphone(const std::string& name,
 {
 }
 
+// создаём отдельную копию смартфона и возвращаем владеющий указатель
 std::unique_ptr<Product> Smartphone::clone() const
 {
     return std::make_unique<Smartphone>(*this);
 }
 
+// конструктор ноутбука с автоматическим ID
 Laptop::Laptop(const std::string& name,
     const Price& price,
     const Quantity& quantity,
@@ -29,6 +33,7 @@ Laptop::Laptop(const std::string& name,
 {
 }
 
+// создаём отдельную копию ноутбука и возвращаем владеющий указатель
 std::unique_ptr<Product> Laptop::clone() const
 {
     return std::make_unique<Laptop>(*this);

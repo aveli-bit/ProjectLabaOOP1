@@ -1,7 +1,7 @@
 ﻿#include "Warehouse.h"
-#include <algorithm>
-#include <stdexcept>
-#include <utility>
+#include <algorithm> // find_if
+#include <stdexcept> // invalid_argument, out_of_range, runtime_error, overflow_error
+#include <utility> // move swap
 #include "WarehouseIterator.h"
 #include "LoggingProxy.h"
 
@@ -24,6 +24,7 @@ Warehouse::Warehouse(const Warehouse& other)
 {
     for (const auto& product : other.products_)
     {
+        // делаем отдельный товар того же конкретного типа
         auto copy = product->clone();
         copy->owner_ = this;
         products_.push_back(std::move(copy)); 
@@ -38,6 +39,7 @@ Warehouse& Warehouse::operator=(const Warehouse& other)
 {
     if (this != &other)
     {
+        // сначала создаём копию чтобы при ошибке текущий склад не изменился
         Warehouse temp(other);
 
         products_.swap(temp.products_);
@@ -269,7 +271,7 @@ void Warehouse::transferTo(int id, Warehouse& other)
     other.products_.push_back(std::move(*it));
     other.products_.back()->owner_ = &other;
 
-    // Удаляем пустой указатель с первого склада
+    // Удаляем пустой указатель с первого склада(из контейнера)
     products_.erase(it);
 
     // Обновляем размеры

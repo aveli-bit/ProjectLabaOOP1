@@ -1,7 +1,7 @@
 ﻿#pragma once
 
-#include <memory>
-#include <string>
+#include <memory> // unique_ptr,make_unique
+#include <string> // для удобного, безопасного и эффективного создания, хранения и изменения текстовых строк
 // фабрики в одном классе. product factory входит в Фабричный метод, oна определяет общий интерфейс  а конкретные фабрики создают товары.
 
 #include "Product.h"
@@ -12,6 +12,7 @@ class ProductFactory
 public:
     virtual ~ProductFactory() = default;
 
+    // конкретная фабрика создаёт свой товар и отдаёт владеющий указатель
     virtual std::unique_ptr<Product> createProduct(
         int id,
         const std::string& name,

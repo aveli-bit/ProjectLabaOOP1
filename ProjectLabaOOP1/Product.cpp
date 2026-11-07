@@ -3,6 +3,7 @@
 #include "Warehouse.h"
 #include "LoggingProxy.h"
 #include <limits>
+#include <cmath>
 
 
 long long Product::nextId_ = 1;
@@ -15,10 +16,9 @@ Product::Product(const std::string& name, // абстрактный класс /
     const std::string& category) // конст чтобы не изменять объект если он константен (относится к 11 строке)
     : id_(0),
     name_(name),
-    price_(price),
+    currentPrice_(price),
     quantity_(quantity),
-    weight_(weight),
-    category_(category) // хар-ки
+    type_(ProductType::getType(category, weight, price))
 {
     // Проверка доступности идентификаторов
     if (nextId_ > std::numeric_limits<int>::max())
@@ -30,6 +30,7 @@ Product::Product(const std::string& name, // абстрактный класс /
     ++nextId_;
 } 
 
+// эти методы возвращают текущие характеристики товара
 int Product::getId() const
 {   
     return id_;
@@ -42,7 +43,7 @@ const std::string& Product::getName() const
 
 const Price& Product::getPrice() const
 {
-    return price_;
+    return currentPrice_;
 }
 
 const Quantity& Product::getQuantity() const
@@ -52,25 +53,29 @@ const Quantity& Product::getQuantity() const
 
 const Weight& Product::getWeight() const
 {
-    return weight_;
+    return type_->getBaseWeight();
 }
 
 const std::string& Product::getCategory() const
 {
-    return category_;
+    return type_->getCategory(); // обращаемся к методам объекта через указатель(тайп хранит указатель на productType)
 }
 
+// меняем количество через проверку в Quantity
 void Product::changeQuantity(int delta)
 {
     quantity_.change(delta);
     LoggingProxy::log("PRODUCT", "Количество товара изменено");
 }
 
+// меняем текущую цену самого товара
 void Product::setPrice(const Price& newPrice)
 {
-    price_ = newPrice;
+    currentPrice_ = newPrice;
+
     LoggingProxy::log("PRODUCT", "Цена товара изменена");
 }
+// создаём товар с заданным ID и обновляем общий счётчик
 Product::Product(int id,
     const std::string& name,
     const Price& price,
@@ -79,10 +84,9 @@ Product::Product(int id,
     const std::string& category)
     : id_(id),
     name_(name),
-    price_(price),
+    currentPrice_(price),
     quantity_(quantity),
-    weight_(weight),
-    category_(category)
+    type_(ProductType::getType(category, weight, price))
 {
     // Проверка корректности ID
         if (id <= 0)
@@ -115,10 +119,30 @@ void Product::transferTo(Warehouse& other)
 Product::Product(const Product& other)
     : id_(other.id_),
     name_(other.name_),
-    price_(other.price_),
+    currentPrice_(other.currentPrice_),
     quantity_(other.quantity_),
-    weight_(other.weight_),
-    category_(other.category_),
+    type_(other.type_),
     owner_(nullptr)
 {
+}
+// считаем стоимость всего количества товара
+long long Product::getTotalPrice() const
+{
+    return static_cast<long long>(currentPrice_.getValue())
+        * quantity_.getValue();
+}
+// считаем общий вес и проверяем результат
+double Product::getTotalWeight() const
+{
+    const double totalWeight =
+        getWeight().getValue() * quantity_.getValue();
+
+    if (!std::isfinite(totalWeight))
+    {
+        throw std::overflow_error(
+            "Общий вес товара слишком большой"
+        );
+    }
+
+    return totalWeight;
 }

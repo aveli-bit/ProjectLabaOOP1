@@ -2,6 +2,7 @@
 #include <stdexcept>
 #include <limits>
 
+// создаём количество через метод с проверкой
 Quantity::Quantity(int value)
 {
     setValue(value);
@@ -12,6 +13,7 @@ int Quantity::getValue() const
     return value_;
 }
 
+// сохраняем новое количество если оно не отрицательное
 void Quantity::setValue(int newValue)
 {
     if (newValue < 0)

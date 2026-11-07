@@ -15,6 +15,7 @@ Product& WarehouseIterator::operator*() const
         throw std::out_of_range("Достигнут конец склада");
     }
 
+    // первая звёздочка получает указатель из вектора а вторая сам товар
     return **current_;
 }
 
@@ -60,6 +61,7 @@ const Product& ConstWarehouseIterator::operator*() const
         throw std::out_of_range("Достигнут конец склада");
     }
 
+    // первая звёздочка получает указатель из вектора а вторая сам товар
     return **current_;
 }
 
@@ -76,8 +78,7 @@ ConstWarehouseIterator& ConstWarehouseIterator::operator++()
 }
 
 // Проверка неравенства итераторов
-bool ConstWarehouseIterator::operator!=(
-    const ConstWarehouseIterator& other) const
+bool ConstWarehouseIterator::operator!=(const ConstWarehouseIterator& other) const
 {
     return current_ != other.current_;
 }

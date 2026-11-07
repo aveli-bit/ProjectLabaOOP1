@@ -7,6 +7,7 @@ class Warehouse;
 class Food : public Product
 {
 public:
+    // общие конструкторы для продуктов питания
     Food(const std::string& name,
         const Price& price,
         const Quantity& quantity,
@@ -30,6 +31,7 @@ public:
         const Price& price, 
         const Quantity& quantity,
         const Weight& weight);
+    // передаём перемещение товара методу родительского класса
     void transferTo(Warehouse& other)
     {
         Product::transferTo(other);
@@ -51,6 +53,7 @@ public:
         const Price& price,
         const Quantity& quantity,
         const Weight& weight);
+    // передаём перемещение товара методу родительского класса
     void transferTo(Warehouse& other)
     {
         Product::transferTo(other);

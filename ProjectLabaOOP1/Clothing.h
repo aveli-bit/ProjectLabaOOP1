@@ -7,6 +7,7 @@ class Warehouse;
 class Clothing : public Product
 {
 public:
+    // общие конструкторы для одежды
     Clothing(const std::string& name,
         const Price& price,
         const Quantity& quantity,
@@ -30,12 +31,13 @@ public:
         const Price& price, 
         const Quantity& quantity,
         const Weight& weight);
+    // передаём перемещение товара методу родительского класса
     void transferTo(Warehouse& other)
     {
         Product::transferTo(other);
     }
 
-    std::unique_ptr<Product> clone() const override;
+    std::unique_ptr<Product> clone() const override; // слово переопределения, использующаяся для назначения функций,которые переопределяют виртуальную функцию в базовом классe
 
     
 };
@@ -51,6 +53,7 @@ public:
         const Price& price, 
         const Quantity& quantity,
         const Weight& weight);
+    // передаём перемещение товара методу родительского класса
     void transferTo(Warehouse& other)
     {
         Product::transferTo(other);

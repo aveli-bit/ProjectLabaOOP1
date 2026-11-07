@@ -1,5 +1,6 @@
 ﻿#include "Clothing.h"
 
+// передаём характеристики и категорию в Product
 Clothing::Clothing(const std::string& name,
     const Price& price,
     const Quantity& quantity,
@@ -8,6 +9,7 @@ Clothing::Clothing(const std::string& name,
 {
 }
 
+// конструктор футболки с автоматическим ID
 TShirt::TShirt(const std::string& name,
     const Price& price,
     const Quantity& quantity,
@@ -16,11 +18,13 @@ TShirt::TShirt(const std::string& name,
 {
 }
 
+// создаём отдельную копию футболки и возвращаем владеющий указатель
 std::unique_ptr<Product> TShirt::clone() const
 {
     return std::make_unique<TShirt>(*this);
 }
 
+// конструктор куртки с автоматическим ID
 Jacket::Jacket(const std::string& name,
     const Price& price,
     const Quantity& quantity,
@@ -29,6 +33,7 @@ Jacket::Jacket(const std::string& name,
 {
 }
 
+// создаём отдельную копию куртки и возвращаем владеющий указатель
 std::unique_ptr<Product> Jacket::clone() const
 {
     return std::make_unique<Jacket>(*this);

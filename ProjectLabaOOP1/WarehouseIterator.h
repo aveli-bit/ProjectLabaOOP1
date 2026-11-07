@@ -1,8 +1,8 @@
 ﻿#pragma once
 
 #include <vector>
-#include <memory>
-#include <iterator>
+#include <memory> // unique_ptr make_unique
+#include <iterator>  // для взаимодействия с итератором
 
 #include "Product.h"
 
@@ -18,8 +18,10 @@ private:
 public:
     WarehouseIterator(Iterator current, Iterator end);
 
+    // получаем сам товар на текущей позиции
     Product& operator*() const;
 
+    // переходим к следующей позиции вектора
     WarehouseIterator& operator++();
 
     bool operator!=(const WarehouseIterator& other) const;
@@ -40,8 +42,10 @@ private:
 public:
     ConstWarehouseIterator(Iterator current, Iterator end);
 
+    // получаем товар без возможности менять его через эту ссылку
     const Product& operator*() const;
 
+    // двигаемся дальше при чтении константного склада
     ConstWarehouseIterator& operator++();
 
     bool operator!=(const ConstWarehouseIterator& other) const;

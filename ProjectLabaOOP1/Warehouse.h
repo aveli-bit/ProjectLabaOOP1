@@ -31,6 +31,7 @@ public:
 
     Warehouse& operator=(Warehouse&& other) noexcept;
 
+    // при удалении склада unique_ptr автоматически удалят его товары
     ~Warehouse() = default;
 
     // Добавление и удаление
@@ -42,6 +43,7 @@ public:
     void transferTo(int id, Warehouse& other); // Перемещение товара на другой склад
 
     // Поиск товаров
+    // возвращаем указатель на товар без передачи владения
     Product* findById(int id);
 
     std::vector<Product*> findByCategory(

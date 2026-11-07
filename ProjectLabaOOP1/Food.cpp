@@ -1,5 +1,6 @@
 ﻿#include "Food.h"
 
+// передаём характеристики и категорию в Product
 Food::Food(const std::string& name,
     const Price& price,
     const Quantity& quantity,
@@ -8,6 +9,7 @@ Food::Food(const std::string& name,
 {
 }
 
+// конструктор молока с автоматическим ID
 Milk::Milk(const std::string& name,
     const Price& price,
     const Quantity& quantity,
@@ -16,11 +18,13 @@ Milk::Milk(const std::string& name,
 {
 }
 
+// создаём отдельную копию молока и возвращаем владеющий указатель
 std::unique_ptr<Product> Milk::clone() const
 {
     return std::make_unique<Milk>(*this);
 }
 
+// конструктор хлеба с автоматическим ID
 Bread::Bread(const std::string& name,
     const Price& price,
     const Quantity& quantity,
@@ -29,6 +33,7 @@ Bread::Bread(const std::string& name,
 {
 }
 
+// создаём отдельную копию хлеба и возвращаем владеющий указатель
 std::unique_ptr<Product> Bread::clone() const
 {
     return std::make_unique<Bread>(*this);

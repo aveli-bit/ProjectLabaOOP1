@@ -2,6 +2,7 @@
 #include <stdexcept>
 #include <cmath>
 
+// создаём вес через метод с проверкой
 Weight::Weight(double value)
 {
     setValue(value);
