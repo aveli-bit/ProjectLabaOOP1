@@ -13,7 +13,7 @@ class OrderManager;
 
 class Order : public IObservable
 {
-private:
+private: // инкапсуляция 
     friend class OrderManager;
 
     int id_;
@@ -21,7 +21,7 @@ private:
     std::string region_ = "local";
     std::vector<std::shared_ptr<const Product>> items_;
    
-    OrderStatus status_ = OrderStatus::Pending;
+    OrderStatus status_ = OrderStatus::Pending; 
     std::vector<IObserver*> observers_;
     bool notifying_ = false;
     OrderManager* manager_ = nullptr;
@@ -91,6 +91,7 @@ public:
     double getTotalPrice() const;
     // назначаем способ доставки после проверки
     void setDelivery(std::shared_ptr<Delivery> delivery);
+    const Delivery* getDelivery() const noexcept;
 };
 
 // применяем акцию к исходному заказу и возвращаем этот же заказ

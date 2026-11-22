@@ -3,6 +3,22 @@
 #include "Electronics.h"
 #include "Clothing.h"
 #include "Food.h"
+#include <stdexcept>
+
+// магазин выбирает фабрику по типу и использует вес по умолчанию
+std::unique_ptr<Product> ProductFactory::createProduct(
+    const std::string& type, const std::string& name, int price, int quantity, int id)
+{
+    constexpr double weight = 1.0;
+    if (type == "Smartphone") return SmartphoneFactory().createProduct(id, name, price, quantity, weight);
+    if (type == "Laptop") return LaptopFactory().createProduct(id, name, price, quantity, weight);
+    if (type == "TShirt") return TShirtFactory().createProduct(id, name, price, quantity, weight);
+    if (type == "Jacket") return JacketFactory().createProduct(id, name, price, quantity, weight);
+    if (type == "Milk") return MilkFactory().createProduct(id, name, price, quantity, weight);
+    if (type == "Bread") return BreadFactory().createProduct(id, name, price, quantity, weight);
+
+    throw std::invalid_argument("Неизвестный тип товара");
+}
 
 // Создание смартфона
 std::unique_ptr<Product> SmartphoneFactory::createProduct(

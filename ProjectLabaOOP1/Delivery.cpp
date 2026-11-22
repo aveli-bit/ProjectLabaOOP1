@@ -3,6 +3,7 @@
 #include "LoggingProxy.h"
 #include <utility>
 #include <cmath>
+// паттерн прокси(реализация)  и стратегия
 #include <stdexcept>
 
 // копируем курьерскую доставку с сохранением конкретного типа
@@ -159,7 +160,7 @@ double DeliveryProxy::getCost(const Order& order) const
     }
 
     const double weight = order.getTotalWeight();
-
+    // паттерн прокси после проверки доступности ищем стоимость в кэше по весу
     if (cacheValid_ && cachedWeight_ == weight)
     {
         LoggingProxy::log(
@@ -168,7 +169,7 @@ double DeliveryProxy::getCost(const Order& order) const
 
         return cachedCost_;
     }
-
+    // если кэш не подошёл передаём расчёт настоящей доставке
     const double cost = realDelivery_->getCost(order);
 
     if (!std::isfinite(cost) || cost < 0.0)

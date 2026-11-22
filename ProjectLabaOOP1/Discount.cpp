@@ -4,6 +4,7 @@
 #include "Product.h"
 #include <stdexcept>
 #include <utility>
+// стратегия
 
 // устанавливаем скидку 10 процентов на товары заказа
 void PercentDiscount::apply(Order& order) const

@@ -2,14 +2,16 @@
 
 #include <chrono>
 #include <cstddef>
+#include <functional>
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
 #include "Order.h"
-
-class OrderManager : public IObserver
+//владеет заказами, проверяет лимиты ,хранит статистику
+class OrderManager : public IObserver // так как менеджер публично наследуется от наблюдателя то заказ может использовать менеджера как
+    // подписчика и сообщать ему у смене статуса заказа через ордер ивент
 {
 private:
     struct CustomerStats
@@ -42,6 +44,14 @@ private:
     void rebindOrders(OrderManager* previous) noexcept;
 
 public:
+    struct Statistics
+    {
+        std::size_t orders;
+        std::size_t activeOrders;
+        double turnover;
+        std::size_t customers;
+    };
+
     // задаём лимит на клиента и на все активные заказы
     explicit OrderManager(
         std::size_t maxActiveOrders = 5,
@@ -61,10 +71,16 @@ public:
     // создаём заказ и копируем в него переданные позиции
     Order& createOrder(
         const std::string& customer,
-        const std::vector<std::shared_ptr<Product>>& items = {}
+        const std::vector<std::shared_ptr<Product>>& items = {},
+        std::shared_ptr<Delivery> delivery = nullptr,
+        const std::function<void(const Order&)>& prepare = {}
     );
 
     void updateStatus(int orderId, OrderStatus newStatus);
+    void confirmPayment(int orderId);
+    void shipOrder(int orderId);
+    void cancelOrder(int orderId);
+    Statistics getStatistics() const noexcept;
 
     Order* findById(int orderId) noexcept;
     const Order* findById(int orderId) const noexcept;
@@ -76,6 +92,9 @@ public:
     std::size_t getActiveOrderCount() const noexcept;
     std::size_t getActiveOrderCount(const std::string& customer) const;
     double getBonusBalance(const std::string& customer) const;
+    void listActiveOrders(std::ostream& output) const;
+    std::size_t getMaxActiveOrders() const noexcept;
+    std::size_t getMaxTotalActiveOrders() const noexcept;
 
     // считаем неотменённые оплаты за период от начала включительно до конца исключительно
     double getTurnover(

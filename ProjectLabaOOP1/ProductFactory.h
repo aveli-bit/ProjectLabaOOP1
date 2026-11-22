@@ -12,6 +12,9 @@ class ProductFactory
 public:
     virtual ~ProductFactory() = default;
 
+    static std::unique_ptr<Product> createProduct(
+        const std::string& type, const std::string& name, int price, int quantity, int id);
+
     // конкретная фабрика создаёт свой товар и отдаёт владеющий указатель
     virtual std::unique_ptr<Product> createProduct(
         int id,

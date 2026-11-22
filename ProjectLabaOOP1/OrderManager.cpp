@@ -1,8 +1,10 @@
 #include "OrderManager.h"
 #include "LoggingProxy.h"
-
+// 
+// паттерн наблюдатель lдля обработки статуса заказа и передаче менеджеру
 #include <cmath>
 #include <limits>
+#include <ostream>
 #include <stdexcept>
 #include <utility>
 
@@ -136,7 +138,9 @@ void OrderManager::rebindOrders(OrderManager* previous) noexcept
 // сначала выполняем проверки и подготовку а потом сохраняем заказ в менеджере
 Order& OrderManager::createOrder(
     const std::string& customer,
-    const std::vector<std::shared_ptr<Product>>& items
+    const std::vector<std::shared_ptr<Product>>& items,
+    std::shared_ptr<Delivery> delivery,
+    const std::function<void(const Order&)>& prepare
 )
 {
     if (customer.empty())
@@ -183,7 +187,18 @@ Order& OrderManager::createOrder(
 
         order->addItem(*item, item->getQuantity().getValue());
     }
+    if (delivery)
+    {
+        order->setDelivery(std::move(delivery));
+    }
 
+    // готовим оплату и доставку до регистрации заказа
+    if (prepare)
+    {
+        prepare(*order);
+    }
+
+    // паттерн наблюдатель менеджер подписывается на новый заказ
     order->subscribe(this);
 
     // увеличиваем вместимость с запасом чтобы не перемещать указатели при каждом заказе
@@ -250,6 +265,26 @@ void OrderManager::updateStatus(int orderId, OrderStatus newStatus)
     order->setStatus(newStatus);
 }
 
+void OrderManager::confirmPayment(int orderId)
+{
+    updateStatus(orderId, OrderStatus::Paid);
+}
+
+void OrderManager::shipOrder(int orderId)
+{
+    updateStatus(orderId, OrderStatus::Shipped);
+}
+
+void OrderManager::cancelOrder(int orderId)
+{
+    updateStatus(orderId, OrderStatus::Cancelled);
+}
+
+OrderManager::Statistics OrderManager::getStatistics() const noexcept
+{
+    return {getOrderCount(), getActiveOrderCount(), getTurnover(), getCustomerCount()};
+}
+
 Order* OrderManager::findById(int orderId) noexcept
 {
     const auto it = records_.find(orderId);
@@ -293,6 +328,28 @@ double OrderManager::getBonusBalance(const std::string& customer) const
 {
     const auto it = customers_.find(customer);
     return it == customers_.end() ? 0.0 : it->second.bonusBalance;
+}
+
+void OrderManager::listActiveOrders(std::ostream& output) const
+{
+    for (const auto& order : orders_)
+    {
+        const auto status = order->getStatus();
+        if (status != OrderStatus::Delivered && status != OrderStatus::Cancelled)
+        {
+            output << *order << '\n';
+        }
+    }
+}
+
+std::size_t OrderManager::getMaxActiveOrders() const noexcept
+{
+    return maxActiveOrders_;
+}
+
+std::size_t OrderManager::getMaxTotalActiveOrders() const noexcept
+{
+    return maxTotalActiveOrders_;
 }
 
 double OrderManager::getTurnover(
@@ -350,7 +407,7 @@ void OrderManager::onOrderEvent(const OrderEvent& event) noexcept
     }
 
     auto& customer = customerIt->second;
-
+    // паттерн наблюдатель по событию оплаты обновляем оборот и бонусы клиента
     if (event.newStatus == OrderStatus::Paid)
     {
         record.paidAmount = record.order->getTotalPrice();

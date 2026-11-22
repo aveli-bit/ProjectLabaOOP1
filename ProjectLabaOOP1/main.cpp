@@ -3,6 +3,7 @@
 #include <utility> // move swap
 #include <exception> // except
 #include <limits> // границы, NaN
+#include <string>
 #include "Warehouse.h"
 #include "WarehouseIterator.h"
 #include "ProductFactory.h"
@@ -15,6 +16,9 @@
 #include <memory>
 #include "Discount.h"
 #include "OrderManager.h"
+#include "ShopFacade.h"
+#include "ShopMediator.h"
+#include "ShopServices.h"
 
 using namespace std;
 
@@ -23,7 +27,7 @@ void printWarehouse(const Warehouse& warehouse)
 {
     cout << "Количество товаров: "
         << warehouse.getCurrentSize()
-        << " из " << warehouse.getMaxSize() << '\n';
+        << " из " << warehouse.getMaxSize() << "\n\n";
 
     for (const auto& product : warehouse)
     {
@@ -31,12 +35,11 @@ void printWarehouse(const Warehouse& warehouse)
             << " | Название: " << product.getName()
             << " | Категория: " << product.getCategory()
             << " | Цена: " << product.getPrice().getValue()
-            << " | Количество: " << product.getQuantity().getValue()
-            << " | Вес единицы: " << product.getWeight().getValue()
+            << " | Количество: " << product.getQuantity().getValue() << '\n'
+            << "  Вес единицы: " << product.getWeight().getValue()
             << " | Общая стоимость: " << product.getTotalPrice()
             << " | Общий вес: " << product.getTotalWeight()
-            << '\n';
-
+            << "\n\n";
     }
 }
 
@@ -210,9 +213,9 @@ void demonstrateCopyAndMove(const Product& product)
 int main()
 {
     SetConsoleOutputCP(CP_UTF8);
+    SetConsoleCP(CP_UTF8);
 
     try
-    
     {
         // проверяем что товары с одинаковыми характеристиками используют общий тип
         auto milkType1 = ProductType::getType(
@@ -229,8 +232,9 @@ int main()
 
         std::cout << "Разный вес — общий объект: "
             << (milkType1 == otherType) << '\n';
+
         // 1. Создание товаров через фабрики
-        cout << " 1. СОЗДАНИЕ ТОВАРОВ \n";
+        cout << "\n 1. СОЗДАНИЕ ТОВАРОВ \n";
 
         Order testOrder(1, "customer-1");
 
@@ -282,6 +286,7 @@ int main()
                 106, "Хлеб", 70, 40, 0.5)
         );
 
+        cout << '\n';
         printWarehouse(warehouse1);
 
         const Product* deliveryMilk = warehouse1.findById(105);
@@ -324,11 +329,12 @@ int main()
 
         for (const Delivery* delivery : methods)
         {
+            const double cost = delivery->getCost(deliveryOrder);
             std::cout << "Стоимость: "
-                << delivery->getCost(deliveryOrder)
+                << cost
                 << " | Срок: "
                 << delivery->getEstimatedTime()
-                << '\n';
+                << "\n\n";
         }
 
         deliveryOrder.removeItem(105);
@@ -344,14 +350,14 @@ int main()
             << pickup.isAvailable(deliveryOrder) << '\n';
 
         std::cout << "Почта доступна: "
-            << post.isAvailable(deliveryOrder) << '\n';
-       
+            << post.isAvailable(deliveryOrder) << "\n\n";
+
         deliveryOrder.setDelivery(
             std::make_shared<PickupDelivery>()
         );
 
         std::cout << "21 кг с самовывозом: "
-            << deliveryOrder.getTotalPrice() << '\n';
+            << deliveryOrder.getTotalPrice() << "\n\n";
 
         deliveryOrder.removeItem(105);
         deliveryOrder.addItem(*deliveryMilk, 2);
@@ -368,7 +374,7 @@ int main()
         );
 
         std::cout << "2 кг с почтой: "
-            << deliveryOrder.getTotalPrice() << '\n';
+            << deliveryOrder.getTotalPrice() << "\n\n";
 
         PercentDiscount percentDiscount;
 
@@ -420,8 +426,8 @@ int main()
         auto cheapProducts = warehouse1.findByPrice(Price(120));
 
         cout << "Товаров с ценой 120: "
-            << cheapProducts.size() << '\n';
-        
+            << cheapProducts.size() << "\n\n";
+
         CashbackDiscount cashbackDiscount;
 
         deliveryOrder.applyDiscount(cashbackDiscount);
@@ -442,7 +448,7 @@ int main()
         catch (const std::exception& error)
         {
             std::cout << "Повторный cashback: "
-                << error.what() << '\n';
+                << error.what() << "\n\n";
         }
 
         FreeDeliveryDiscount freeDeliveryDiscount;
@@ -486,7 +492,7 @@ int main()
         catch (const std::exception& error)
         {
             std::cout << "Бесплатная доставка для 21 кг: "
-                << error.what() << '\n';
+                << error.what() << "\n\n";
         }
 
         auto giftProduct = breadFactory.createProduct(
@@ -547,7 +553,7 @@ int main()
             << giftWeightOrder.getTotalWeight() << '\n';
 
         std::cout << "Стоимость после отказа: "
-            << giftWeightOrder.getTotalPrice() << '\n';
+            << giftWeightOrder.getTotalPrice() << "\n\n";
 
         Order proxyOrder(5, "customer-5");
 
@@ -585,8 +591,7 @@ int main()
             << proxyOrder.getTotalPrice() << '\n';
 
         std::cout << "Прокси доступен для заказа весом 21 кг: "
-            << deliveryProxy->isAvailable(heavyFreeOrder) << '\n';
-
+            << deliveryProxy->isAvailable(heavyFreeOrder) << "\n\n";
 
         TestOrderObserver observer;
 
@@ -817,6 +822,23 @@ int main()
         }
 
         cout << "\n ВСЕ СЦЕНАРИИ ЗАВЕРШЕНЫ \n";
+
+        // передаём команды магазина фасаду
+        cout << "\n ЛАБОРАТОРНАЯ 3. УПРАВЛЕНИЕ МАГАЗИНОМ \n\n"
+            << "Список команд — help\n";
+
+        ShopInventory shopInventory;
+        OrderManager shopOrders;
+        PaymentSystem shopPayment;
+        DeliveryService shopDelivery;
+        ShopMediator shopMediator(shopInventory, shopOrders, shopPayment, shopDelivery);
+        ShopFacade shop(shopInventory, shopMediator, shopOrders, cout);
+
+        std::string input;
+        while (std::getline(cin, input))
+        {
+            shop.processInput(input);
+        }
     }
     catch (const exception& error)
     {

@@ -1,15 +1,16 @@
 #pragma once
-
+// паттерн стратегия
 #include <string>
 #include <memory>
-
+// 
+// паттерн прокси 
 class Order;
 
 // тут общий интерфейс для разных способов доставки
 class Delivery
 {
 public:
-    virtual ~Delivery() = default;
+    virtual ~Delivery() = default; // абстрактынй чтобы задать обязательные методы для конкретных наследников и запретить создание объекта без их реализации
 
     // создаём копию конкретного способа доставки для хранения в заказе
     virtual std::unique_ptr<Delivery> clone() const = 0;
@@ -24,7 +25,7 @@ public:
     virtual bool isAvailable(const Order& order) const = 0;
 };
 
-class CourierDelivery : public Delivery
+class CourierDelivery : public Delivery 
 {
 public:
     std::unique_ptr<Delivery> clone() const override;
@@ -67,7 +68,7 @@ private:
     std::shared_ptr<Delivery> realDelivery_;
     std::string supportedRegion_;
 
-    mutable bool cacheValid_ = false;
+    mutable bool cacheValid_ = false;  // тут у нас исключение в котором нам нужно разрешить изменение поля внутри const 
     mutable double cachedWeight_ = 0.0;
     mutable double cachedCost_ = 0.0;
 

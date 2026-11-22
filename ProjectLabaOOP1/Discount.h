@@ -1,5 +1,5 @@
 #pragma once
-
+// паттерн стратегия
 #include <memory>
 #include <string>
 

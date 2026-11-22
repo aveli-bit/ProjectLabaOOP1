@@ -6,7 +6,7 @@
 #include <cmath>
 #include <stdexcept>
 #include <ostream>
-
+// паттерн наблюдателя для рассылки подписчика о смене статуса заказа
 namespace
 {
     // получаем название статуса для вывода заказа
@@ -278,8 +278,9 @@ void Order::addItem(const Product& product, int quantity)
         }
     }
 
-    auto copy = product.clone();
-
+    auto copy = product.clone(); // связь через полиморфизм; auto просит компилятор определить тип copy по результату clone()
+    // Здесь это сокращение записи
+    // std::unique_ptr<Product> copy = product.clone();
     copy->changeQuantity(
         quantity - copy->getQuantity().getValue()
     );
@@ -373,7 +374,7 @@ double Order::calculateTotalPrice(
                 "Выбранная доставка недоступна для заказа"
             );
         }
-
+        // паттерн стратегия отдаём расчёт стоимости выбранному способу доставки
         const double deliveryCost = delivery->getCost(*this); // this указатель на текущий заказ а *this сам текущий, именно его передаём доставке для проверки веса
 
         if (!std::isfinite(deliveryCost) || deliveryCost < 0.0)
@@ -399,9 +400,9 @@ double Order::calculateTotalPrice(
     return result;
 }
 // сначала проверяем новый способ доставки потом сохраняем его в заказе
-void Order::setDelivery(std::shared_ptr<Delivery> delivery)
+void Order::setDelivery(std::shared_ptr<Delivery> delivery) // проверяем доставку
 {
-    if (status_ != OrderStatus::Pending)
+    if (status_ != OrderStatus::Pending) // проверка на правильность заказа 
     {
         throw std::runtime_error(
             "Доставку можно менять только до оплаты"
@@ -422,6 +423,11 @@ void Order::setDelivery(std::shared_ptr<Delivery> delivery)
 
     LoggingProxy::log("ORDER", "Назначен способ доставки");
 }
+const Delivery* Order::getDelivery() const noexcept
+{
+    return delivery_.get();
+}
+
 // проверяем повтор акции и применяем её копию к заказу
 void Order::applyDiscount(const Discount& discount)
 {
@@ -434,7 +440,7 @@ void Order::applyDiscount(const Discount& discount)
 
     const std::string name = discount.getName();
 
-    for (const auto& applied : discounts_)
+    for (const auto& applied : discounts_) // проверка правильно ли считана скидка при повторном вводе 
     {
         if (applied->getName() == name)
         {
@@ -454,7 +460,7 @@ void Order::applyDiscount(const Discount& discount)
     }
 
     discounts_.reserve(discounts_.size() + 1);
-
+    // паттерн стратегия вызываем правила выбранной акции через общий интерфейс
     copy->apply(*this);
 
     discounts_.push_back(std::move(copy));
@@ -719,7 +725,7 @@ void Order::notify(const OrderEvent& event) noexcept
 }
 
 // проверяем переход статуса и сообщаем подписчикам об изменении
-void Order::setStatus(OrderStatus newStatus)
+void Order::setStatus(OrderStatus newStatus) // инкапсуляция
 {
     if (notifying_)
     {
@@ -774,12 +780,12 @@ void Order::setStatus(OrderStatus newStatus)
     status_ = newStatus;
 
     LoggingProxy::log("ORDER", "Статус заказа изменён");
-
+    // паттерн наблюдатель после смены статуса передаём событие подписчикам
     notify(event);
 }
 
 // используем обычное применение акции со всеми его проверками
-Order& operator+(Order& order, const Discount& discount)
+Order& operator+(Order& order, const Discount& discount) 
 {
     order.applyDiscount(discount);
     return order;

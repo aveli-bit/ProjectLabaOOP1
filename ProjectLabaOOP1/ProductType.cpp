@@ -6,7 +6,7 @@
 #include <locale>
 #include <sstream>
 #include <stdexcept>
-
+// product type xранит общие характеристики и переиспользует объект из пула
 std::unordered_map<
     std::string,
     std::shared_ptr<ProductType>
@@ -44,7 +44,7 @@ std::shared_ptr<ProductType> ProductType::getType(
         << basePrice.getValue();
 
     const std::string key = keyStream.str();
-
+    // паттерн легковес ищем общий тип по категории весу и базовой цене
     auto it = pool_.find(key);
 
     if (it != pool_.end())
