@@ -22,14 +22,14 @@ Handler& Handler::setNext(std::unique_ptr<Handler> next)
 }
 
 // передаём строку дальше если обработчик не узнал команду
-bool Handler::handle(const std::string& input, ShopFacade& facade) const
+bool Handler::handle(const std::string& input) const
 {
-    if (tryHandle(input, facade))
+    if (tryHandle(input, facade_))
     {
         return true;
     }
 
-    return next_ && next_->handle(input, facade);
+    return next_ && next_->handle(input);
 }
 
 namespace

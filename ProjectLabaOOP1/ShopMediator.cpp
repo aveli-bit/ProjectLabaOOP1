@@ -1,5 +1,6 @@
 // паттерн посредник связываем склад заказы оплату и доставку
 #include "ShopMediator.h"
+#include "Warehouse.h"
 #include "ShopServices.h"
 #include "OrderManager.h"
 #include "LoggingProxy.h"
@@ -20,7 +21,7 @@ namespace
     }
 }
 
-ShopMediator::ShopMediator(ShopInventory& warehouse, OrderManager& orders,
+ShopMediator::ShopMediator(Warehouse& warehouse, OrderManager& orders,
     PaymentSystem& payment, DeliveryService& delivery)
     : warehouse_(warehouse), orders_(orders), payment_(payment), delivery_(delivery)
 {
@@ -189,8 +190,8 @@ void ShopMediator::getStatistics(std::ostream& output, Report report) const
         << " | Активных: " << stats.activeOrders
         << " | Оборот: " << stats.turnover
         << " | Клиентов: " << stats.customers
-        << " | Загрузка складов: " << warehouse_.getUsedSlots()
-        << " из " << warehouse_.getTotalSlots() << '\n';
+        << " | Загрузка складов: " << warehouse_.getCurrentSize()
+        << " из " << warehouse_.getMaxSize() << '\n';
 }
 
 // перед удалением проверяем есть ли товар в резерве заказов

@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#include <iosfwd>
+#include <unordered_map>
 #include <vector>
 #include <memory>
 #include <string>
@@ -15,11 +17,35 @@ class Warehouse
 private:
     std::vector<std::unique_ptr<Product>> products_;
 
+    struct StockEntry
+    {
+        Product* product;
+        int warehouseId;
+        int reserved;
+    };
+
+    // по ID находим товар и его резерв а вектор сохраняет порядок обхода
+    std::unordered_map<int, StockEntry> productsById_;
     size_t maxSize_;
-    size_t currentSize_;
+    int locationCount_ = 1;
+    long long nextProductId_ = 1;
+
+    StockEntry& stockFor(int id);
+    size_t countAt(int warehouseId) const;
+    void swapState(Warehouse& other) noexcept;
+    friend class ShopMediator;
+    friend class Product;
+    int reservedQuantity(int id) const noexcept;
+    std::shared_ptr<Product> prepareItem(int id);
+    void reserve(int id);
+    void release(int id) noexcept;
+    void consume(int id) noexcept;
     Product& requireProduct(int id);
 
 public:
+    // магазин начинает работу с двумя складами по сто мест
+    Warehouse();
+
     // Конструктор
     explicit Warehouse(size_t maxSize);
 
@@ -37,7 +63,11 @@ public:
 
     // Добавление и удаление
     void addProduct(std::unique_ptr<Product> product);
+    int addProduct(const std::string& type, const std::string& name, int price, int quantity);
+    void moveProduct(int id, int warehouseId);
+    void listProducts(std::ostream& output) const;
     void changePrice(int id, const Price& price);
+    void changePrice(int id, int newPrice);
     void changeQuantity(int id, int delta);
     void moveProduct(int id, Warehouse& other);
     void removeProduct(int id);

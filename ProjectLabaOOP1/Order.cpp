@@ -84,16 +84,16 @@ Order::Order(const Order& other)
         items_.push_back(std::shared_ptr<Product>(std::move(copy)));
     }
 
-    if (other.delivery_)
+    if (other.deliveryType_)
     {
-        auto copy = other.delivery_->clone();
+        auto copy = other.deliveryType_->clone();
 
         if (!copy)
         {
             throw std::runtime_error("Не удалось скопировать доставку заказа");
         }
 
-        delivery_ = std::shared_ptr<Delivery>(std::move(copy));
+        deliveryType_ = std::shared_ptr<Delivery>(std::move(copy));
     }
 
     discounts_.reserve(other.discounts_.size());
@@ -174,7 +174,7 @@ void Order::swapData(Order& other) noexcept
     region_.swap(other.region_);
     items_.swap(other.items_);
     std::swap(status_, other.status_);
-    delivery_.swap(other.delivery_);
+    deliveryType_.swap(other.deliveryType_);
     discounts_.swap(other.discounts_);
     std::swap(percentDiscount_, other.percentDiscount_);
     std::swap(cashbackPercent_, other.cashbackPercent_);
@@ -192,7 +192,7 @@ void Order::resetMovedFrom() noexcept
     items_.clear();
     status_ = OrderStatus::Cancelled;
     observers_.clear();
-    delivery_.reset();
+    deliveryType_.reset();
     discounts_.clear();
     percentDiscount_ = 0.0;
     cashbackPercent_ = 0.0;
@@ -301,7 +301,7 @@ void Order::addItem(const Product& product, int quantity)
 
     try
     {
-        totalPrice_ = calculateTotalPrice(delivery_);
+        totalPrice_ = calculateTotalPrice(deliveryType_);
     }
     catch (...)
     {
@@ -345,7 +345,7 @@ void Order::removeItem(int productId)
 
     try
     {
-        totalPrice_ = calculateTotalPrice(delivery_);
+        totalPrice_ = calculateTotalPrice(deliveryType_);
     }
     catch (...)
     {
@@ -418,14 +418,14 @@ void Order::setDelivery(std::shared_ptr<Delivery> delivery) // проверяе�
 
     const double newTotalPrice = calculateTotalPrice(delivery);
 
-    delivery_ = std::move(delivery); // std::move позволяет передать указатель в поле,перемещается shared_ptr а не создаётся копия объекта доставки
+    deliveryType_ = std::move(delivery); // std::move позволяет передать указатель в поле,перемещается shared_ptr а не создаётся копия объекта доставки
     totalPrice_ = newTotalPrice;
 
     LoggingProxy::log("ORDER", "Назначен способ доставки");
 }
 const Delivery* Order::getDelivery() const noexcept
 {
-    return delivery_.get();
+    return deliveryType_.get();
 }
 
 // проверяем повтор акции и применяем её копию к заказу
@@ -492,7 +492,7 @@ void Order::setPercentDiscount(double percent)
 
     try
     {
-        totalPrice_ = calculateTotalPrice(delivery_);
+        totalPrice_ = calculateTotalPrice(deliveryType_);
     }
     catch (...)
     {
@@ -591,7 +591,7 @@ void Order::setFreeDelivery(bool enabled)
 
     try
     {
-        totalPrice_ = calculateTotalPrice(delivery_);
+        totalPrice_ = calculateTotalPrice(deliveryType_);
     }
     catch (...)
     {
@@ -628,7 +628,7 @@ void Order::setRegion(const std::string& region)
 
     try
     {
-        totalPrice_ = calculateTotalPrice(delivery_);
+        totalPrice_ = calculateTotalPrice(deliveryType_);
     }
     catch (...)
     {

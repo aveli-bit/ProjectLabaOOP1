@@ -34,7 +34,7 @@ private: // инкапсуляция
     double calculateTotalPrice(
         const std::shared_ptr<Delivery>& delivery) const;
 
-    std::shared_ptr<Delivery> delivery_;
+    std::shared_ptr<Delivery> deliveryType_;
     std::vector<std::shared_ptr<const Discount>> discounts_;
 
     double percentDiscount_ = 0.0;

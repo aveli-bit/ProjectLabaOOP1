@@ -60,21 +60,21 @@ void AddProductCommand::execute()
     facade_.addProduct(type_, name_, price_, quantity_);
 }
 
-ChangePriceCommand::ChangePriceCommand(ShopFacade& facade, int id, int price)
+ChangePriceCommand::ChangePriceCommand(ShopFacade& facade, int productId, int newPrice)
     : Command(facade),
-      id_(id),
-      price_(price)
+      productId_(productId),
+      newPrice_(newPrice)
 {
 }
 
 void ChangePriceCommand::execute()
 {
-    facade_.changePrice(id_, price_);
+    facade_.changePrice(productId_, newPrice_);
 }
 
-ChangeQuantityCommand::ChangeQuantityCommand(ShopFacade& facade, int id, int delta)
+ChangeQuantityCommand::ChangeQuantityCommand(ShopFacade& facade, int productId, int delta)
     : Command(facade),
-      id_(id),
+      productId_(productId),
       delta_(delta)
 {
 }
@@ -82,37 +82,37 @@ ChangeQuantityCommand::ChangeQuantityCommand(ShopFacade& facade, int id, int del
 // знак изменения определяет увеличится остаток или уменьшится
 void ChangeQuantityCommand::execute()
 {
-    facade_.changeQuantity(id_, delta_);
+    facade_.changeQuantity(productId_, delta_);
 }
 
-MoveProductCommand::MoveProductCommand(ShopFacade& facade, int id, int warehouseId)
+MoveProductCommand::MoveProductCommand(ShopFacade& facade, int productId, int newWarehouseId)
     : Command(facade),
-      id_(id),
-      warehouseId_(warehouseId)
+      productId_(productId),
+      newWarehouseId_(newWarehouseId)
 {
 }
 
 // передаём ID товара и склад назначения
 void MoveProductCommand::execute()
 {
-    facade_.moveProduct(id_, warehouseId_);
+    facade_.moveProduct(productId_, newWarehouseId_);
 }
 
-RemoveProductCommand::RemoveProductCommand(ShopFacade& facade, int id)
+RemoveProductCommand::RemoveProductCommand(ShopFacade& facade, int productId)
     : Command(facade),
-      id_(id)
+      productId_(productId)
 {
 }
 
 void RemoveProductCommand::execute()
 {
-    facade_.removeProduct(id_);
+    facade_.removeProduct(productId_);
 }
 
-CreateOrderCommand::CreateOrderCommand(ShopFacade& facade, std::string customer, std::vector<int> ids, std::string deliveryType)
+CreateOrderCommand::CreateOrderCommand(ShopFacade& facade, std::string customer, std::vector<int> items, std::string deliveryType)
     : Command(facade),
       customer_(std::move(customer)),
-      ids_(std::move(ids)),
+      items_(std::move(items)),
       deliveryType_(std::move(deliveryType))
 {
 }
@@ -120,41 +120,41 @@ CreateOrderCommand::CreateOrderCommand(ShopFacade& facade, std::string customer,
 // передаём фасаду покупателя товары и доставку из полей команды
 void CreateOrderCommand::execute()
 {
-    facade_.createOrder(customer_, ids_, deliveryType_);
+    facade_.createOrder(customer_, items_, deliveryType_);
 }
 
-CancelOrderCommand::CancelOrderCommand(ShopFacade& facade, int id)
+CancelOrderCommand::CancelOrderCommand(ShopFacade& facade, int orderId)
     : Command(facade),
-      id_(id)
+      orderId_(orderId)
 {
 }
 
 void CancelOrderCommand::execute()
 {
-    facade_.cancelOrder(id_);
+    facade_.cancelOrder(orderId_);
 }
 
-ConfirmPaymentCommand::ConfirmPaymentCommand(ShopFacade& facade, int id)
+ConfirmPaymentCommand::ConfirmPaymentCommand(ShopFacade& facade, int orderId)
     : Command(facade),
-      id_(id)
+      orderId_(orderId)
 {
 }
 
 void ConfirmPaymentCommand::execute()
 {
-    facade_.confirmPayment(id_);
+    facade_.confirmPayment(orderId_);
 }
 
-ShipOrderCommand::ShipOrderCommand(ShopFacade& facade, int id)
+ShipOrderCommand::ShipOrderCommand(ShopFacade& facade, int orderId)
     : Command(facade),
-      id_(id)
+      orderId_(orderId)
 {
 }
 
 // фасад передаёт ID заказа посреднику для отправки
 void ShipOrderCommand::execute()
 {
-    facade_.shipOrder(id_);
+    facade_.shipOrder(orderId_);
 }
 
 // команды просмотра вызывают готовые методы вывода у фасада

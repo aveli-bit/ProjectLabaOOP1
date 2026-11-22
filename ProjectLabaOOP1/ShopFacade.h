@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-class ShopInventory;
+class Warehouse;
 class ShopMediator;
 class Handler;
 
@@ -16,7 +16,7 @@ class Handler;
 class ShopFacade
 {
 private:
-    ShopInventory& warehouse_;
+    Warehouse& warehouse_;
     ShopMediator& mediator_;
     std::ostream& output_;
     // фасад хранит начало цепочки и историю выполненных команд
@@ -24,7 +24,7 @@ private:
     CommandHistory history_;
 
 public:
-    ShopFacade(ShopInventory& warehouse, ShopMediator& mediator, std::ostream& output);
+    ShopFacade(Warehouse& warehouse, ShopMediator& mediator, std::ostream& output);
     ~ShopFacade();
 
     // сюда приходит текст из консоли и отсюда начинается его разбор

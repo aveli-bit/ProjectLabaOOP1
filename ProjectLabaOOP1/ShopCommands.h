@@ -54,11 +54,11 @@ public:
 class ChangePriceCommand : public Command
 {
 private:
-    int id_;
-    int price_;
+    int productId_;
+    int newPrice_;
 
 public:
-    ChangePriceCommand(ShopFacade& facade, int id, int price);
+    ChangePriceCommand(ShopFacade& facade, int productId, int newPrice);
     void execute() override;
 };
 
@@ -66,32 +66,32 @@ public:
 class ChangeQuantityCommand : public Command
 {
 private:
-    int id_;
+    int productId_;
     int delta_;
 
 public:
-    ChangeQuantityCommand(ShopFacade& facade, int id, int delta);
+    ChangeQuantityCommand(ShopFacade& facade, int productId, int delta);
     void execute() override;
 };
 
 class MoveProductCommand : public Command
 {
 private:
-    int id_;
-    int warehouseId_;
+    int productId_;
+    int newWarehouseId_;
 
 public:
-    MoveProductCommand(ShopFacade& facade, int id, int warehouseId);
+    MoveProductCommand(ShopFacade& facade, int productId, int newWarehouseId);
     void execute() override;
 };
 
 class RemoveProductCommand : public Command
 {
 private:
-    int id_;
+    int productId_;
 
 public:
-    RemoveProductCommand(ShopFacade& facade, int id);
+    RemoveProductCommand(ShopFacade& facade, int productId);
     void execute() override;
 };
 
@@ -100,11 +100,11 @@ class CreateOrderCommand : public Command
 {
 private:
     std::string customer_;
-    std::vector<int> ids_;
+    std::vector<int> items_;
     std::string deliveryType_;
 
 public:
-    CreateOrderCommand(ShopFacade& facade, std::string customer, std::vector<int> ids, std::string deliveryType);
+    CreateOrderCommand(ShopFacade& facade, std::string customer, std::vector<int> items, std::string deliveryType);
     void execute() override;
 };
 
@@ -112,30 +112,30 @@ public:
 class CancelOrderCommand : public Command
 {
 private:
-    int id_;
+    int orderId_;
 
 public:
-    CancelOrderCommand(ShopFacade& facade, int id);
+    CancelOrderCommand(ShopFacade& facade, int orderId);
     void execute() override;
 };
 
 class ConfirmPaymentCommand : public Command
 {
 private:
-    int id_;
+    int orderId_;
 
 public:
-    ConfirmPaymentCommand(ShopFacade& facade, int id);
+    ConfirmPaymentCommand(ShopFacade& facade, int orderId);
     void execute() override;
 };
 
 class ShipOrderCommand : public Command
 {
 private:
-    int id_;
+    int orderId_;
 
 public:
-    ShipOrderCommand(ShopFacade& facade, int id);
+    ShipOrderCommand(ShopFacade& facade, int orderId);
     void execute() override;
 };
 

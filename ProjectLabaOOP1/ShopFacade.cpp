@@ -2,34 +2,34 @@
 #include "ShopFacade.h"
 #include "ShopHandlers.h"
 #include "ShopMediator.h"
-#include "ShopServices.h"
+#include "Warehouse.h"
 #include "LoggingProxy.h"
 #include <ostream>
 #include <stdexcept>
 #include <utility>
 
 // сохраняем ссылки на готовые подсистемы и создаём первое звено
-ShopFacade::ShopFacade(ShopInventory& warehouse, ShopMediator& mediator, std::ostream& output)
+ShopFacade::ShopFacade(Warehouse& warehouse, ShopMediator& mediator, std::ostream& output)
     : warehouse_(warehouse),
       mediator_(mediator),
       output_(output),
-      firstHandler_(std::make_unique<AddProductHandler>())
+      firstHandler_(std::make_unique<AddProductHandler>(*this))
 {
     // собираем цепочку каждый вызов возвращает добавленное звено
     firstHandler_
-        ->setNext(std::make_unique<ChangePriceHandler>())
-        .setNext(std::make_unique<ChangeQuantityHandler>())
-        .setNext(std::make_unique<MoveProductHandler>())
-        .setNext(std::make_unique<RemoveProductHandler>())
-        .setNext(std::make_unique<CreateOrderHandler>())
-        .setNext(std::make_unique<CancelOrderHandler>())
-        .setNext(std::make_unique<ConfirmPaymentHandler>())
-        .setNext(std::make_unique<ShipOrderHandler>())
-        .setNext(std::make_unique<ShowStatisticsHandler>())
-        .setNext(std::make_unique<ShowProductsHandler>())
-        .setNext(std::make_unique<ShowOrdersHandler>())
-        .setNext(std::make_unique<ShowSettingsHandler>())
-        .setNext(std::make_unique<HelpHandler>());
+        ->setNext(std::make_unique<ChangePriceHandler>(*this))
+        .setNext(std::make_unique<ChangeQuantityHandler>(*this))
+        .setNext(std::make_unique<MoveProductHandler>(*this))
+        .setNext(std::make_unique<RemoveProductHandler>(*this))
+        .setNext(std::make_unique<CreateOrderHandler>(*this))
+        .setNext(std::make_unique<CancelOrderHandler>(*this))
+        .setNext(std::make_unique<ConfirmPaymentHandler>(*this))
+        .setNext(std::make_unique<ShipOrderHandler>(*this))
+        .setNext(std::make_unique<ShowStatisticsHandler>(*this))
+        .setNext(std::make_unique<ShowProductsHandler>(*this))
+        .setNext(std::make_unique<ShowOrdersHandler>(*this))
+        .setNext(std::make_unique<ShowSettingsHandler>(*this))
+        .setNext(std::make_unique<HelpHandler>(*this));
 }
 
 ShopFacade::~ShopFacade() = default;
@@ -47,7 +47,7 @@ void ShopFacade::processInput(const std::string& input)
 
     try
     {
-        if (!firstHandler_->handle(input, *this))
+        if (!firstHandler_->handle(input))
         {
             throw std::invalid_argument("Неизвестная команда. Введи help");
         }

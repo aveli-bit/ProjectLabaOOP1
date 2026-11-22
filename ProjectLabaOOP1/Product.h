@@ -16,9 +16,10 @@ class Product
 protected: // чтобы поля были доступны внутри класса продукт и наследующих классов  
     int id_;
     std::string name_;
-    Price currentPrice_;
+    Price price_;
     Quantity quantity_;
     std::shared_ptr<ProductType> type_; //  получаем через поле type_ общую категорию базовый вес и базовую цену
+    const std::string& category_; // читаем общую категорию из легковеса
     Warehouse* owner_ = nullptr;
     friend class Warehouse;
 

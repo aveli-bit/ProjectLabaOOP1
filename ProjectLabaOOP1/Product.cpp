@@ -26,9 +26,10 @@ Product::Product(const std::string& name, // абстрактный класс /
     const std::string& category) // конст чтобы не изменять объект если он константен (относится к 11 строке)
     : id_(0),
     name_(name),
-    currentPrice_(price),
+    price_(price),
     quantity_(quantity),
-    type_(ProductType::getType(category, weight, price))
+    type_(ProductType::getType(category, weight, price)),
+    category_(type_->getCategory())
 {
     // Проверка доступности идентификаторов
     id_ = nextAutomaticId();
@@ -48,7 +49,7 @@ const std::string& Product::getName() const
 
 const Price& Product::getPrice() const
 {
-    return currentPrice_;
+    return price_;
 }
 
 const Quantity& Product::getQuantity() const
@@ -63,12 +64,18 @@ const Weight& Product::getWeight() const
 
 const std::string& Product::getCategory() const
 {
-    return type_->getCategory(); // обращаемся к методам объекта через указатель(тайп хранит указатель на productType)
+    return category_;
 }
 
 // меняем количество через проверку в Quantity
 void Product::changeQuantity(int delta)
 {
+    if (owner_ && delta < 0)
+    {
+        const int reserved = owner_->reservedQuantity(id_);
+        if (reserved > 0 && static_cast<long long>(quantity_.getValue()) + delta < reserved)
+            throw std::invalid_argument("Остаток не может быть меньше резерва");
+    }
     quantity_.change(delta);
     LoggingProxy::log("PRODUCT", "Количество товара изменено");
 }
@@ -81,7 +88,7 @@ void Product::setPrice(const Price& newPrice)
 
 void Product::changePrice(const Price& newPrice)
 {
-    currentPrice_ = newPrice;
+    price_ = newPrice;
 
     LoggingProxy::log("PRODUCT", "Цена товара изменена");
 }
@@ -94,9 +101,10 @@ Product::Product(int id,
     const std::string& category)
     : id_(id),
     name_(name),
-    currentPrice_(price),
+    price_(price),
     quantity_(quantity),
-    type_(ProductType::getType(category, weight, price))
+    type_(ProductType::getType(category, weight, price)),
+    category_(type_->getCategory())
 {
     // Проверка корректности ID
         if (id <= 0)
@@ -129,16 +137,17 @@ void Product::transferTo(Warehouse& other)
 Product::Product(const Product& other)
     : id_(other.id_),
     name_(other.name_),
-    currentPrice_(other.currentPrice_),
+    price_(other.price_),
     quantity_(other.quantity_),
     type_(other.type_),
+    category_(type_->getCategory()),
     owner_(nullptr)
 {
 }
 // считаем стоимость всего количества товара
 long long Product::getTotalPrice() const
 {
-    return static_cast<long long>(currentPrice_.getValue())
+    return static_cast<long long>(price_.getValue())
         * quantity_.getValue();
 }
 // считаем общий вес и проверяем результат

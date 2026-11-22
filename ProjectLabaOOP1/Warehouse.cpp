@@ -4,10 +4,19 @@
 #include <utility> // move swap
 #include "WarehouseIterator.h"
 #include "LoggingProxy.h"
+#include "ProductFactory.h"
+#include <limits>
+#include <ostream>
+
+Warehouse::Warehouse()
+    : Warehouse(100)
+{
+    locationCount_ = 2;
+}
 
 // Конструктор склада
 Warehouse::Warehouse(size_t maxSize)
-    : maxSize_(maxSize), currentSize_(0)
+    : maxSize_(maxSize)
 {
     if (maxSize == 0)
     {
@@ -20,17 +29,19 @@ Warehouse::Warehouse(size_t maxSize)
 
 // Конструктор копирования
 Warehouse::Warehouse(const Warehouse& other)
-    : maxSize_(other.maxSize_), currentSize_(0)
+    : maxSize_(other.maxSize_), locationCount_(other.locationCount_), nextProductId_(other.nextProductId_)
 {
     for (const auto& product : other.products_)
     {
         // делаем отдельный товар того же конкретного типа
         auto copy = product->clone();
         copy->owner_ = this;
+        StockEntry entry = other.productsById_.at(copy->getId());
+        entry.product = copy.get();
+        productsById_.emplace(copy->getId(), entry);
         products_.push_back(std::move(copy)); 
     }
 
-    currentSize_ = products_.size();
     LoggingProxy::log("WAREHOUSE", "Создана глубокая копия склада");
 }
 
@@ -42,13 +53,7 @@ Warehouse& Warehouse::operator=(const Warehouse& other)
         // сначала создаём копию чтобы при ошибке текущий склад не изменился
         Warehouse temp(other);
 
-        products_.swap(temp.products_);
-        std::swap(maxSize_, temp.maxSize_);
-        std::swap(currentSize_, temp.currentSize_);
-        for (auto& product : products_)
-        {
-            product->owner_ = this;
-        }
+        swapState(temp);
     }
     LoggingProxy::log("WAREHOUSE", "Выполнено копирующее присваивание склада");
     return *this;
@@ -56,17 +61,9 @@ Warehouse& Warehouse::operator=(const Warehouse& other)
 
 // Конструктор перемещения
 Warehouse::Warehouse(Warehouse&& other) noexcept
-    : products_(std::move(other.products_)),
-    maxSize_(other.maxSize_),
-    currentSize_(other.currentSize_)
-
+    : maxSize_(other.locationCount_ == 2 ? 100 : 0), locationCount_(other.locationCount_)
 {
-    for (auto& product : products_)
-    {
-        product->owner_ = this;
-    }
-    other.maxSize_ = 0;
-    other.currentSize_ = 0;
+    swapState(other);
     LoggingProxy::log("WAREHOUSE", "Склад перемещён через конструктор");
 }
 
@@ -75,31 +72,42 @@ Warehouse& Warehouse::operator=(Warehouse&& other) noexcept
 {
     if (this != &other)
     {
-        products_ = std::move(other.products_);
-        maxSize_ = other.maxSize_;
-        currentSize_ = other.currentSize_;
-
-        other.maxSize_ = 0;
-        other.currentSize_ = 0;
-        for (auto& product : products_)
-        {
-            product->owner_ = this;
-        }
+        Warehouse moved(std::move(other));
+        swapState(moved);
     }
     LoggingProxy::log("WAREHOUSE", "Выполнено перемещающее присваивание склада");
     return *this;
 }
 
+// переносим индекс вместе с товарами и привязываем их к владельцу
+void Warehouse::swapState(Warehouse& other) noexcept
+{
+    products_.swap(other.products_);
+    productsById_.swap(other.productsById_);
+    std::swap(maxSize_, other.maxSize_);
+    std::swap(locationCount_, other.locationCount_);
+    std::swap(nextProductId_, other.nextProductId_);
+    for (auto& item : products_) item->owner_ = this;
+    for (auto& item : other.products_) item->owner_ = &other;
+}
+
+size_t Warehouse::countAt(int warehouseId) const
+{
+    if (locationCount_ == 1) return products_.size();
+    return std::count_if(productsById_.begin(), productsById_.end(),
+        [warehouseId](const auto& entry) { return entry.second.warehouseId == warehouseId; });
+}
+
 // Максимальная вместимость
 size_t Warehouse::getMaxSize() const
 {
-    return maxSize_;
+    return maxSize_ * locationCount_;
 }
 
 // Текущее количество товаров
 size_t Warehouse::getCurrentSize() const
 {
-    return currentSize_;
+    return products_.size();
 }
 
 // Добавление товара на склад
@@ -112,7 +120,7 @@ void Warehouse::addProduct(std::unique_ptr<Product> product)
     }
 
     // Проверка вместимости склада
-    if (currentSize_ >= maxSize_)
+    if (countAt(1) >= maxSize_)
     {
         throw std::runtime_error("Склад переполнен");
     }
@@ -124,16 +132,34 @@ void Warehouse::addProduct(std::unique_ptr<Product> product)
             "Товар с таким ID уже существует на складе"
         );
     }
-    product->owner_ = this;
-
-    // Передача владения товаром складу
-    products_.push_back(std::move(product));
-
-    // Обновление количества товаров
-    currentSize_ = products_.size();
+    const int id = product->getId();
+    productsById_.emplace(id, StockEntry{product.get(), 1, 0});
+    try
+    {
+        product->owner_ = this;
+        products_.push_back(std::move(product));
+    }
+    catch (...)
+    {
+        productsById_.erase(id);
+        throw;
+    }
+    nextProductId_ = (std::max)(nextProductId_, static_cast<long long>(id) + 1);
     LoggingProxy::log("WAREHOUSE", "Товар добавлен на склад");
 }
 
+
+// фабрика создаёт товар с очередным ID магазина
+int Warehouse::addProduct(const std::string& type, const std::string& name, int price, int quantity)
+{
+    if (name.empty() || nextProductId_ > (std::numeric_limits<int>::max)())
+    {
+        throw std::invalid_argument("Нельзя создать товар с такими параметрами");
+    }
+    const int id = static_cast<int>(nextProductId_);
+    addProduct(ProductFactory::createProduct(type, name, price, quantity, id));
+    return id;
+}
 
 // Удаление товара по ID
 void Warehouse::removeById(int id)
@@ -157,36 +183,32 @@ void Warehouse::removeProduct(int id)
         throw std::out_of_range("Не найден айди продукта");
     }
 
+    if (reservedQuantity(id) != 0) throw std::logic_error("Зарезервированный товар нельзя удалить");
+    productsById_.erase(id);
     products_.erase(it);
-    currentSize_ = products_.size();
     LoggingProxy::log("WAREHOUSE", "Товар удалён по ID");
 }
 
 // Удаление товара по индексу
 void Warehouse::removeByIndex(size_t index)
 {
-    if (index >= currentSize_)
+    if (index >= products_.size())
     {
         throw std::out_of_range("Недопустимый индекс");
     }
 
+    const int id = products_[index]->getId();
+    if (reservedQuantity(id) != 0) throw std::logic_error("Зарезервированный товар нельзя удалить");
+    productsById_.erase(id);
     products_.erase(products_.begin() + index);
-    currentSize_ = products_.size();
     LoggingProxy::log("WAREHOUSE", "Товар удалён по индексу");
 }
 
 // Поиск товара по ID
 Product* Warehouse::findById(int id)
 {
-    for (auto& product : products_)
-    {
-        if (product->getId() == id)
-        {
-            return product.get();
-        }
-    }
-
-    return nullptr;
+    const auto it = productsById_.find(id);
+    return it == productsById_.end() ? nullptr : it->second.product;
 }
 
 // изменение по ID возможно только для товара на этом складе
@@ -203,6 +225,11 @@ Product& Warehouse::requireProduct(int id)
 void Warehouse::changePrice(int id, const Price& price)
 {
     requireProduct(id).changePrice(price);
+}
+
+void Warehouse::changePrice(int id, int newPrice)
+{
+    changePrice(id, Price(newPrice));
 }
 
 void Warehouse::changeQuantity(int id, int delta)
@@ -280,7 +307,7 @@ void Warehouse::moveProduct(int id, Warehouse& other)
     }
 
     // Проверяем вместимость второго склада
-    if (other.currentSize_ >= other.maxSize_)
+    if (other.countAt(1) >= other.maxSize_)
     {
         throw std::runtime_error(
             "Склад назначения переполнен"
@@ -295,8 +322,14 @@ void Warehouse::moveProduct(int id, Warehouse& other)
         );
     }
 
+    if (reservedQuantity(id) != 0) throw std::logic_error("Зарезервированный товар нельзя переместить");
+
     // Выделяем место до перемещения товара
     other.products_.reserve(other.products_.size() + 1);
+
+    other.productsById_.emplace(id, StockEntry{it->get(), 1, 0});
+    other.nextProductId_ = (std::max)(other.nextProductId_, static_cast<long long>(id) + 1);
+    productsById_.erase(id);
 
     // Передаём владение товаром
     other.products_.push_back(std::move(*it));
@@ -305,10 +338,81 @@ void Warehouse::moveProduct(int id, Warehouse& other)
     // Удаляем пустой указатель с первого склада(из контейнера)
     products_.erase(it);
 
-    // Обновляем размеры
-    currentSize_ = products_.size();
-    other.currentSize_ = other.products_.size();
     LoggingProxy::log("WAREHOUSE", "Товар перемещён между складами");
+}
+
+Warehouse::StockEntry& Warehouse::stockFor(int id)
+{
+    auto it = productsById_.find(id);
+    if (it == productsById_.end()) throw std::out_of_range("Товар не найден");
+    return it->second;
+}
+
+int Warehouse::reservedQuantity(int id) const noexcept
+{
+    const auto it = productsById_.find(id);
+    return it == productsById_.end() ? 0 : it->second.reserved;
+}
+
+// у каждого товара есть номер склада и общий для всех заказов резерв
+void Warehouse::moveProduct(int id, int warehouseId)
+{
+    if (warehouseId < 1 || warehouseId > locationCount_)
+        throw std::invalid_argument("Указанный склад не существует");
+    auto& entry = stockFor(id);
+    if (entry.reserved != 0) throw std::logic_error("Зарезервированный товар нельзя переместить");
+    if (entry.warehouseId == warehouseId) throw std::invalid_argument("Нельзя перемещать на тот же склад");
+    if (countAt(warehouseId) >= maxSize_) throw std::runtime_error("Склад назначения переполнен");
+    entry.warehouseId = warehouseId;
+    LoggingProxy::log("WAREHOUSE", "Товар перемещён между складами");
+}
+
+void Warehouse::listProducts(std::ostream& output) const
+{
+    for (int id = 1; id <= locationCount_; ++id)
+    {
+        output << "Склад " << id << " | Товаров: " << countAt(id) << '\n';
+        for (const auto& product : products_)
+        {
+            const auto& entry = productsById_.at(product->getId());
+            if (entry.warehouseId != id) continue;
+            output << "ID: " << product->getId() << " | Название: " << product->getName()
+                << " | Цена: " << product->getPrice().getValue()
+                << " | Остаток: " << product->getQuantity().getValue() - entry.reserved
+                << " | Резерв: " << entry.reserved << '\n';
+        }
+    }
+}
+
+// для позиции заказа копируем одну доступную единицу
+std::shared_ptr<Product> Warehouse::prepareItem(int id)
+{
+    const auto& entry = stockFor(id);
+    const int quantity = entry.product->getQuantity().getValue();
+    if (quantity <= entry.reserved) throw std::runtime_error("Товара нет в свободном остатке");
+    auto copy = entry.product->clone();
+    copy->changeQuantity(1 - quantity);
+    return std::shared_ptr<Product>(std::move(copy));
+}
+
+void Warehouse::reserve(int id)
+{
+    auto& entry = stockFor(id);
+    if (entry.product->getQuantity().getValue() <= entry.reserved)
+        throw std::runtime_error("Товара нет в свободном остатке");
+    ++entry.reserved;
+}
+
+void Warehouse::release(int id) noexcept
+{
+    --productsById_.find(id)->second.reserved;
+}
+
+// при отправке снимаем одну единицу с резерва и списываем её со склада
+void Warehouse::consume(int id) noexcept
+{
+    release(id);
+    findById(id)->changeQuantity(-1);
 }
 
 // Итератор на первый товар склада

@@ -827,7 +827,7 @@ int main()
         cout << "\n ЛАБОРАТОРНАЯ 3. УПРАВЛЕНИЕ МАГАЗИНОМ \n\n"
             << "Список команд — help\n";
 
-        ShopInventory shopInventory;
+        Warehouse shopInventory;
         OrderManager shopOrders;
         PaymentSystem shopPayment;
         DeliveryService shopDelivery;

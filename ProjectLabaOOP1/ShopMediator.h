@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-class ShopInventory;
+class Warehouse;
 class OrderManager;
 class PaymentSystem;
 class DeliveryService;
@@ -16,7 +16,7 @@ class ShopMediator
 {
 private:
     // посредник хранит ссылки на подсистемы а обратных ссылок у них нет
-    ShopInventory& warehouse_;
+    Warehouse& warehouse_;
     OrderManager& orders_;
     PaymentSystem& payment_;
     DeliveryService& delivery_;
@@ -25,7 +25,7 @@ private:
     Order& requireOrder(int id);
 
 public:
-    ShopMediator(ShopInventory& warehouse, OrderManager& orders,
+    ShopMediator(Warehouse& warehouse, OrderManager& orders,
         PaymentSystem& payment, DeliveryService& delivery);
 
     int createOrder(const std::string& customer, const std::vector<int>& ids,
@@ -37,6 +37,8 @@ public:
     // через посредника получаем статистику активные заказы и лимиты менеджера
     void getStatistics(std::ostream& output, Report report = Report::Summary) const;
 
+private:
+    friend class ShopFacade;
     void checkProductRemoval(int id) const;
     // сюда фасад передаёт события об изменениях товаров
     void onProductAdded(int id) const noexcept;
