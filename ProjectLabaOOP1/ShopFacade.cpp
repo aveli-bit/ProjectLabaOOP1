@@ -113,6 +113,7 @@ void ShopFacade::moveProduct(int id, int warehouseId)
 
 void ShopFacade::removeProduct(int id)
 {
+    mediator_.checkProductRemoval(id);
     warehouse_.removeProduct(id);
     mediator_.onProductRemoved(id);
 }

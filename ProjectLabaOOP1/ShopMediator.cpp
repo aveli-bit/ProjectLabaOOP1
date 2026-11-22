@@ -177,6 +177,15 @@ void ShopMediator::getStatistics(std::ostream& output) const
         << " из " << warehouse_.getTotalSlots() << '\n';
 }
 
+// перед удалением проверяем есть ли товар в резерве заказов
+void ShopMediator::checkProductRemoval(int id) const
+{
+    if (warehouse_.reservedQuantity(id) != 0)
+    {
+        throw std::logic_error("Зарезервированный товар нельзя удалить");
+    }
+}
+
 void ShopMediator::onProductAdded(int id) const noexcept
 {
     logProductEvent("Товар добавлен", id);

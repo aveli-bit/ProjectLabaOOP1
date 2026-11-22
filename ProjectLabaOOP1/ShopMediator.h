@@ -36,6 +36,7 @@ public:
     // объединяем данные менеджера заказов и склада
     void getStatistics(std::ostream& output) const;
 
+    void checkProductRemoval(int id) const;
     // сюда фасад передаёт события об изменениях товаров
     void onProductAdded(int id) const noexcept;
     void onProductChanged(int id) const noexcept;
