@@ -138,6 +138,11 @@ void Warehouse::addProduct(std::unique_ptr<Product> product)
 // Удаление товара по ID
 void Warehouse::removeById(int id)
 {
+    removeProduct(id);
+}
+
+void Warehouse::removeProduct(int id)
+{
     auto it = std::find_if(
         products_.begin(),
         products_.end(),
@@ -184,6 +189,27 @@ Product* Warehouse::findById(int id)
     return nullptr;
 }
 
+// изменение по ID возможно только для товара на этом складе
+Product& Warehouse::requireProduct(int id)
+{
+    auto* product = findById(id);
+    if (!product)
+    {
+        throw std::out_of_range("Товар не найден");
+    }
+    return *product;
+}
+
+void Warehouse::changePrice(int id, const Price& price)
+{
+    requireProduct(id).changePrice(price);
+}
+
+void Warehouse::changeQuantity(int id, int delta)
+{
+    requireProduct(id).changeQuantity(delta);
+}
+
 // Поиск товаров по категории
 std::vector<Product*> Warehouse::findByCategory(
     const std::string& category)
@@ -224,6 +250,11 @@ std::vector<Product*> Warehouse::findByPrice(
 
 // Перемещение товара между складами
 void Warehouse::transferTo(int id, Warehouse& other)
+{
+    moveProduct(id, other);
+}
+
+void Warehouse::moveProduct(int id, Warehouse& other)
 {
     // Проверяем, что склады разные
     if (this == &other)

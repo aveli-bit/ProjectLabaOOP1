@@ -14,6 +14,9 @@ class OrderManager : public IObserver // так как менеджер публ
     // подписчика и сообщать ему у смене статуса заказа через ордер ивент
 {
 private:
+    friend class ShopMediator;
+    void rollbackRegistration() noexcept;
+
     struct CustomerStats
     {
         std::size_t activeOrders = 0;

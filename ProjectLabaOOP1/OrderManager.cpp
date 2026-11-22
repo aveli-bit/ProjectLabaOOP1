@@ -3,6 +3,7 @@
 // 
 // паттерн наблюдатель lдля обработки статуса заказа и передаче менеджеру
 #include <cmath>
+#include <algorithm>
 #include <limits>
 #include <ostream>
 #include <stdexcept>
@@ -192,7 +193,7 @@ Order& OrderManager::createOrder(
         order->setDelivery(std::move(delivery));
     }
 
-    // готовим оплату и доставку до регистрации заказа
+    // выполняем дополнительную проверку заказа если она передана
     if (prepare)
     {
         prepare(*order);
@@ -250,6 +251,25 @@ Order& OrderManager::createOrder(
     LoggingProxy::log("MANAGER", "Заказ принят и менеджер подписан на события");
 
     return *orders_.back();
+}
+
+void OrderManager::rollbackRegistration() noexcept
+{
+    // посредник откатывает последний заказ если оплата или доставка его не приняли
+    const Order& order = *orders_.back();
+    auto customer = customers_.find(order.getCustomer());
+    --customer->second.activeOrders;
+    records_.erase(order.getId());
+    orders_.pop_back();
+    --activeOrders_;
+    --nextOrderId_;
+
+    // сохраняем статистику если у клиента остались другие заказы
+    if (customer->second.activeOrders == 0 && std::none_of(orders_.begin(), orders_.end(),
+        [&](const auto& other) { return other->getCustomer() == customer->first; }))
+    {
+        customers_.erase(customer);
+    }
 }
 
 // статус меняет сам заказ а статистика обновляется через событие

@@ -3,6 +3,7 @@
 #include "ShopCommands.h"
 #include "ShopFacade.h"
 #include <charconv>
+#include <locale>
 #include <iomanip>
 #include <sstream>
 #include <stdexcept>
@@ -45,11 +46,21 @@ namespace
         return !object || (stream >> word && word == object);
     }
 
+    // каждый параметр начинается после пробела или табуляции
+    template<class T>
+    bool readArg(std::istringstream& stream, T&& value)
+    {
+        const int next = stream.peek();
+        return next != std::char_traits<char>::eof()
+            && std::isspace(static_cast<char>(next), stream.getloc())
+            && static_cast<bool>(stream >> std::forward<T>(value));
+    }
+
     // читаем ожидаемые параметры и проверяем что за ними ничего нет
     template<class... Args>
     void readArgs(std::istringstream& stream, Args&&... args)
     {
-        if (!(stream >> ... >> std::forward<Args>(args)))
+        if (!(readArg(stream, std::forward<Args>(args)) && ...))
         {
             throw std::invalid_argument("Не удалось прочитать параметры команды");
         }

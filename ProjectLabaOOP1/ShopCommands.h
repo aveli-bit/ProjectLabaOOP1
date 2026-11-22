@@ -1,6 +1,7 @@
 // паттерн команда объявления команд магазина и их истории
 #pragma once
 
+#include <list>
 #include <memory>
 #include <string>
 #include <vector>
@@ -27,10 +28,11 @@ class CommandHistory
 {
 private:
     // история владеет объектами выполненных команд
-    std::vector<std::unique_ptr<Command>> commands_;
+    std::list<std::unique_ptr<Command>> commands_;
 
 public:
     void push(std::unique_ptr<Command> command);
+    void executeAndPush(std::unique_ptr<Command> command);
     Command* getLastCommand() noexcept;
     void undo() noexcept;
 };

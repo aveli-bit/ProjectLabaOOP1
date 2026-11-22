@@ -832,7 +832,7 @@ int main()
         PaymentSystem shopPayment;
         DeliveryService shopDelivery;
         ShopMediator shopMediator(shopInventory, shopOrders, shopPayment, shopDelivery);
-        ShopFacade shop(shopInventory, shopMediator, shopOrders, cout);
+        ShopFacade shop(shopInventory, shopMediator, cout);
 
         std::string input;
         while (std::getline(cin, input))

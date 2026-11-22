@@ -17,6 +17,7 @@ private:
 
     size_t maxSize_;
     size_t currentSize_;
+    Product& requireProduct(int id);
 
 public:
     // Конструктор
@@ -36,6 +37,10 @@ public:
 
     // Добавление и удаление
     void addProduct(std::unique_ptr<Product> product);
+    void changePrice(int id, const Price& price);
+    void changeQuantity(int id, int delta);
+    void moveProduct(int id, Warehouse& other);
+    void removeProduct(int id);
 
     void removeById(int id);
 

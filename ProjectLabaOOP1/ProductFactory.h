@@ -12,6 +12,10 @@ class ProductFactory
 public:
     virtual ~ProductFactory() = default;
 
+    // без указанного ID используем общий счётчик товаров
+    static std::unique_ptr<Product> createProduct(
+        const std::string& type, const std::string& name, int price, int quantity);
+
     static std::unique_ptr<Product> createProduct(
         const std::string& type, const std::string& name, int price, int quantity, int id);
 

@@ -5,7 +5,13 @@
 #include "Food.h"
 #include <stdexcept>
 
-// магазин выбирает фабрику по типу и использует вес по умолчанию
+std::unique_ptr<Product> ProductFactory::createProduct(
+    const std::string& type, const std::string& name, int price, int quantity)
+{
+    return createProduct(type, name, price, quantity, Product::nextAutomaticId());
+}
+
+// магазин может передать ID из своего каталога
 std::unique_ptr<Product> ProductFactory::createProduct(
     const std::string& type, const std::string& name, int price, int quantity, int id)
 {

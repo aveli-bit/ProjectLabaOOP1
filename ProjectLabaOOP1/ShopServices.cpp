@@ -117,21 +117,21 @@ int ShopInventory::addProduct(const std::string& type, const std::string& name,
 
 void ShopInventory::changePrice(int id, int price)
 {
-    locate(id).product->setPrice(Price(price));
+    warehouses_[locate(id).warehouseIndex].changePrice(id, Price(price));
 }
 
 // остаток после изменения должен покрывать уже сделанный резерв
 void ShopInventory::changeQuantity(int id, int delta)
 {
-    Product& product = *locate(id).product;
-    const auto after = static_cast<long long>(product.getQuantity().getValue()) + delta;
+    const auto& location = locate(id);
+    const auto after = static_cast<long long>(location.product->getQuantity().getValue()) + delta;
 
     if (after < reservedQuantity(id))
     {
         throw std::invalid_argument("Остаток не может быть меньше резерва");
     }
 
-    product.changeQuantity(delta);
+    warehouses_[location.warehouseIndex].changeQuantity(id, delta);
 }
 
 void ShopInventory::moveProduct(int id, int warehouseId)
@@ -149,7 +149,7 @@ void ShopInventory::moveProduct(int id, int warehouseId)
     ProductLocation& location = locate(id);
     const auto target = static_cast<std::size_t>(warehouseId - 1);
     // обновляем склад в индексе только после успешного переноса
-    warehouses_[location.warehouseIndex].transferTo(id, warehouses_[target]);
+    warehouses_[location.warehouseIndex].moveProduct(id, warehouses_[target]);
     location.warehouseIndex = target;
 }
 
@@ -160,7 +160,7 @@ void ShopInventory::removeProduct(int id)
         throw std::logic_error("Зарезервированный товар нельзя удалить");
     }
 
-    warehouses_[locate(id).warehouseIndex].removeById(id);
+    warehouses_[locate(id).warehouseIndex].removeProduct(id);
     productsById_.erase(id);
 }
 

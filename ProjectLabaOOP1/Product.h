@@ -10,6 +10,9 @@
 class Warehouse;
 class Product
 {
+    friend class ProductFactory;
+    static int nextAutomaticId();
+
 protected: // чтобы поля были доступны внутри класса продукт и наследующих классов  
     int id_;
     std::string name_;
@@ -54,6 +57,7 @@ public:
     double getTotalWeight() const;
 
     void changeQuantity(int delta);
+    void changePrice(const Price& newPrice);
     void setPrice(const Price& newPrice);
 
     // наследник должен создавать копию своего конкретного типа

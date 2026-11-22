@@ -8,6 +8,16 @@
 
 long long Product::nextId_ = 1;
 
+// проверяем общий счётчик перед созданием товара с автоматическим ID
+int Product::nextAutomaticId()
+{
+    if (nextId_ > std::numeric_limits<int>::max())
+    {
+        throw std::overflow_error("Закончились доступные ID товаров");
+    }
+    return static_cast<int>(nextId_);
+}
+
 // Конструктор товара с автоматическим ID
 Product::Product(const std::string& name, // абстрактный класс / список инициализации конструктора
     const Price& price,
@@ -21,12 +31,7 @@ Product::Product(const std::string& name, // абстрактный класс /
     type_(ProductType::getType(category, weight, price))
 {
     // Проверка доступности идентификаторов
-    if (nextId_ > std::numeric_limits<int>::max())
-    {
-        throw std::overflow_error("Закончились доступные ID товаров");
-    }
-
-    id_ = static_cast<int>(nextId_);
+    id_ = nextAutomaticId();
     ++nextId_;
 } 
 
@@ -70,6 +75,11 @@ void Product::changeQuantity(int delta)
 
 // меняем текущую цену самого товара
 void Product::setPrice(const Price& newPrice)
+{
+    changePrice(newPrice);
+}
+
+void Product::changePrice(const Price& newPrice)
 {
     currentPrice_ = newPrice;
 

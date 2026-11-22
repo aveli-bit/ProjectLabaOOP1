@@ -3,18 +3,15 @@
 #include "ShopHandlers.h"
 #include "ShopMediator.h"
 #include "ShopServices.h"
-#include "OrderManager.h"
 #include "LoggingProxy.h"
 #include <ostream>
 #include <stdexcept>
 #include <utility>
 
 // сохраняем ссылки на готовые подсистемы и создаём первое звено
-ShopFacade::ShopFacade(ShopInventory& warehouse, ShopMediator& mediator,
-    const OrderManager& orders, std::ostream& output)
+ShopFacade::ShopFacade(ShopInventory& warehouse, ShopMediator& mediator, std::ostream& output)
     : warehouse_(warehouse),
       mediator_(mediator),
-      orders_(orders),
       output_(output),
       firstHandler_(std::make_unique<AddProductHandler>())
 {
@@ -67,22 +64,8 @@ void ShopFacade::processInput(const std::string& input)
 
 void ShopFacade::executeCommand(std::unique_ptr<Command> command)
 {
-    if (!command)
-    {
-        throw std::invalid_argument("Пустая команда");
-    }
-
-    // готовим запись до выполнения и убираем её при ошибке
-    history_.push(std::move(command));
-    try
-    {
-        history_.getLastCommand()->execute();
-    }
-    catch (...)
-    {
-        history_.undo();
-        throw;
-    }
+    // в историю попадают только успешно выполненные команды
+    history_.executeAndPush(std::move(command));
 }
 
 // склад добавляет товар а посредник получает событие с его ID
@@ -146,11 +129,10 @@ void ShopFacade::shipOrder(int id)
     mediator_.shipOrder(id);
 }
 
-// получаем число активных заказов и их список у менеджера
+// запрашиваем у посредника список активных заказов
 void ShopFacade::listOrders() const
 {
-    output_ << "Активных заказов: " << orders_.getActiveOrderCount() << '\n';
-    orders_.listActiveOrders(output_);
+    mediator_.getStatistics(output_, ShopMediator::Report::ActiveOrders);
 }
 
 void ShopFacade::getStatistics() const
@@ -160,9 +142,8 @@ void ShopFacade::getStatistics() const
 
 void ShopFacade::showSettings() const
 {
-    output_ << "Лимит на клиента: " << orders_.getMaxActiveOrders()
-        << " | Общий лимит: " << orders_.getMaxTotalActiveOrders() << '\n'
-        << "Доставка: courier pickup post\n"
+    mediator_.getStatistics(output_, ShopMediator::Report::OrderLimits);
+    output_ << "Доставка: courier pickup post\n"
         << "Активные акции: нет\n";
 }
 

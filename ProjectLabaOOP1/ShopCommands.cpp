@@ -1,6 +1,7 @@
 // паттерн команда выполнение действий через фасад и хранение истории
 #include "ShopCommands.h"
 #include "ShopFacade.h"
+#include <stdexcept>
 #include <utility>
 
 // привязываем команду к фасаду при создании
@@ -13,6 +14,20 @@ Command::Command(ShopFacade& facade)
 void CommandHistory::push(std::unique_ptr<Command> command)
 {
     commands_.push_back(std::move(command));
+}
+
+void CommandHistory::executeAndPush(std::unique_ptr<Command> command)
+{
+    if (!command)
+    {
+        throw std::invalid_argument("Пустая команда");
+    }
+
+    // готовим место отдельно и переносим запись в историю после выполнения
+    std::list<std::unique_ptr<Command>> entry;
+    entry.push_back(std::move(command));
+    entry.back()->execute();
+    commands_.splice(commands_.end(), entry);
 }
 
 // даём доступ к последней команде без передачи владения

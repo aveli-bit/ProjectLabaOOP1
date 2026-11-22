@@ -9,24 +9,22 @@
 
 class ShopInventory;
 class ShopMediator;
-class OrderManager;
 class Handler;
 
 // паттерн фасад единая точка входа для команд магазина
+// фасад передаёт операции складу и посреднику где проверяются правила магазина
 class ShopFacade
 {
 private:
     ShopInventory& warehouse_;
     ShopMediator& mediator_;
-    const OrderManager& orders_;
     std::ostream& output_;
     // фасад хранит начало цепочки и историю выполненных команд
     std::unique_ptr<Handler> firstHandler_;
     CommandHistory history_;
 
 public:
-    ShopFacade(ShopInventory& warehouse, ShopMediator& mediator,
-        const OrderManager& orders, std::ostream& output);
+    ShopFacade(ShopInventory& warehouse, ShopMediator& mediator, std::ostream& output);
     ~ShopFacade();
 
     // сюда приходит текст из консоли и отсюда начинается его разбор

@@ -37,7 +37,7 @@ Order& ShopMediator::requireOrder(int id)
     return *order;
 }
 
-// резервируем позиции и готовим оплату и доставку до регистрации заказа
+// резервируем товар и регистрируем заказ перед запросом оплаты и доставки
 int ShopMediator::createOrder(const std::string& customer,
     const std::vector<int>& ids, const std::string& deliveryType)
 {
@@ -64,7 +64,8 @@ int ShopMediator::createOrder(const std::string& customer,
 
     // при отказе освобождаем только те позиции которые уже успели зарезервировать
     std::size_t reserved = 0;
-    int preparedId = 0;
+    int registeredId = 0;
+    bool paymentRequested = false;
     try
     {
         for (const int id : ids)
@@ -73,22 +74,23 @@ int ShopMediator::createOrder(const std::string& customer,
             ++reserved;
         }
 
-        // передаём менеджеру подготовку которую он вызовет для нового заказа
-        return orders_.createOrder(customer, items, std::move(delivery),
-            [&](const Order& order)
-            {
-                payment_.requestPayment(order.getId(), order.getCustomer(), order.getTotalPrice());
-                preparedId = order.getId();
-                delivery_.scheduleDelivery(*order.getDelivery(), order);
-            }).getId();
+        const Order& order = orders_.createOrder(customer, items, std::move(delivery));
+        registeredId = order.getId();
+        payment_.requestPayment(registeredId, customer, order.getTotalPrice());
+        paymentRequested = true;
+        delivery_.scheduleDelivery(*order.getDelivery(), order);
+        return registeredId;
     }
     catch (...)
     {
-        // при ошибке убираем созданный запрос оплаты и план доставки
-        if (preparedId != 0)
+        // отменяем только те шаги которые успели выполнить для нового заказа
+        if (paymentRequested)
         {
-            payment_.refund(preparedId);
-            delivery_.removeSchedule(preparedId);
+            payment_.refund(registeredId);
+        }
+        if (registeredId != 0)
+        {
+            orders_.rollbackRegistration();
         }
 
         while (reserved > 0)
@@ -165,9 +167,23 @@ void ShopMediator::cancelOrder(int id)
     }
 }
 
-// добавляем загрузку складов к статистике заказов
-void ShopMediator::getStatistics(std::ostream& output) const
+// выбираем нужные данные менеджера и добавляем загрузку складов в общую сводку
+void ShopMediator::getStatistics(std::ostream& output, Report report) const
 {
+    if (report == Report::ActiveOrders)
+    {
+        output << "Активных заказов: " << orders_.getActiveOrderCount() << '\n';
+        orders_.listActiveOrders(output);
+        return;
+    }
+
+    if (report == Report::OrderLimits)
+    {
+        output << "Лимит на клиента: " << orders_.getMaxActiveOrders()
+            << " | Общий лимит: " << orders_.getMaxTotalActiveOrders() << '\n';
+        return;
+    }
+
     const auto stats = orders_.getStatistics();
     output << "Всего заказов: " << stats.orders
         << " | Активных: " << stats.activeOrders

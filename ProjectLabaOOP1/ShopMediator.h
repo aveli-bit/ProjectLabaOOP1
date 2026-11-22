@@ -15,7 +15,7 @@ class Order;
 class ShopMediator
 {
 private:
-    // подсистемы созданы снаружи и доступны посреднику по ссылке
+    // посредник хранит ссылки на подсистемы а обратных ссылок у них нет
     ShopInventory& warehouse_;
     OrderManager& orders_;
     PaymentSystem& payment_;
@@ -33,8 +33,9 @@ public:
     void confirmPayment(int id);
     void shipOrder(int id);
     void cancelOrder(int id);
-    // объединяем данные менеджера заказов и склада
-    void getStatistics(std::ostream& output) const;
+    enum class Report { Summary, ActiveOrders, OrderLimits };
+    // через посредника получаем статистику активные заказы и лимиты менеджера
+    void getStatistics(std::ostream& output, Report report = Report::Summary) const;
 
     void checkProductRemoval(int id) const;
     // сюда фасад передаёт события об изменениях товаров
